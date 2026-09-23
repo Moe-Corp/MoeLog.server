@@ -1,0 +1,23 @@
+{
+  "name": "@moelog-server/api",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "DATABASE_URL=${DATABASE_URL:-file:moelog.db} MOELOG_INGEST_KEY=${MOELOG_INGEST_KEY:-mlk_pub_dev} bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate --config drizzle.config.pg.ts && drizzle-kit generate --config drizzle.config.sqlite.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.2.0",
+    "drizzle-orm": "^0.45.3",
+    "elysia": "^1.2.0",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^7.0.2"
+  }
+}
