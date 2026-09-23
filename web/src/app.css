@@ -1,0 +1,169 @@
+@import 'tailwindcss';
+
+/*
+ * "MoeLog Telemetry Engine" design system.
+ *
+ * The tokens come from server/design/stitch-prototype/moelog_telemetry_engine/
+ * DESIGN.md, translated from the prototype's Tailwind 3 config into the
+ * CSS-first configuration of Tailwind 4.
+ *
+ * The thesis: an instrumentation console. Solid surfaces in greyscale, thin
+ * borders instead of shadows, and colour reserved for conveying severity —
+ * never for decoration.
+ */
+@theme {
+  /* Surfaces: five steps of grey, from canvas to modals */
+  --color-surface: #131313;
+  --color-surface-dim: #131313;
+  --color-surface-bright: #393939;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-surface-container-low: #1b1c1c;
+  --color-surface-container: #1f2020;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface-container-highest: #353535;
+  --color-surface-variant: #353535;
+
+  --color-on-surface: #e4e2e1;
+  --color-on-surface-variant: #c3caac;
+  --color-outline: #8d9479;
+  --color-outline-variant: #434933;
+
+  /* Fluorescent lime: live connection, focus, confirmation */
+  --color-primary: #ffffff;
+  --color-on-primary: #273500;
+  --color-primary-container: #bef500;
+  --color-on-primary-container: #536d00;
+  --color-primary-fixed-dim: #a6d700;
+
+  /* Amber: degradation, blocking — the app is alive but not serving */
+  --color-secondary: #ffb692;
+  --color-on-secondary: #552000;
+  --color-secondary-container: #ea6b18;
+  --color-on-secondary-container: #4b1b00;
+
+  /* Cyan: technical metadata, ids, trace links */
+  --color-tertiary-container: #7df4ff;
+  --color-on-tertiary-container: #006f77;
+  --color-tertiary-fixed-dim: #00dbe9;
+
+  /* Red: process death */
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  /* Geist for prose, JetBrains Mono for everything technical */
+  --font-body: 'Geist', system-ui, sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, monospace;
+
+  --text-headline-xl: 1.75rem;
+  --text-headline-xl--line-height: 2.25rem;
+  --text-headline-xl--letter-spacing: -0.02em;
+  --text-headline-xl--font-weight: 600;
+  --text-headline-lg: 1.375rem;
+  --text-headline-lg--line-height: 1.75rem;
+  --text-headline-lg--letter-spacing: -0.015em;
+  --text-headline-lg--font-weight: 600;
+  --text-headline-md: 1.125rem;
+  --text-headline-md--line-height: 1.5rem;
+  --text-headline-md--letter-spacing: -0.01em;
+  --text-headline-md--font-weight: 600;
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.375rem;
+  --text-body-sm: 0.75rem;
+  --text-body-sm--line-height: 1.125rem;
+  --text-code-lg: 0.875rem;
+  --text-code-lg--line-height: 1.375rem;
+  --text-code-lg--letter-spacing: -0.01em;
+  --text-code-lg--font-weight: 500;
+  --text-code-md: 0.75rem;
+  --text-code-md--line-height: 1.25rem;
+  --text-code-md--letter-spacing: -0.01em;
+  --text-code-sm: 0.6875rem;
+  --text-code-sm--line-height: 1rem;
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1rem;
+  --text-label-md--letter-spacing: 0.02em;
+  --text-label-md--font-weight: 500;
+  --text-label-sm: 0.6875rem;
+  --text-label-sm--line-height: 0.875rem;
+  --text-label-sm--letter-spacing: 0.03em;
+  --text-label-sm--font-weight: 600;
+
+  /* Austere radii: this is instrumentation, not a product card */
+  --radius-sm: 0.125rem;
+  --radius-DEFAULT: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+
+  --spacing-gutter: 0.75rem;
+  --spacing-margin: 1rem;
+  --spacing-margin-desktop: 1.5rem;
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.375rem;
+  --spacing-space-md: 0.5rem;
+  --spacing-space-lg: 0.75rem;
+  --spacing-space-xl: 1rem;
+  --spacing-space-2xl: 1.5rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-surface);
+    color-scheme: dark;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--text-body-md);
+    line-height: var(--text-body-md--line-height);
+    background: var(--color-surface);
+    color: var(--color-on-surface);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Tabular figures everywhere: counters change live and must not jump. */
+  .tabular,
+  [data-tabular] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Severity marker. Text always accompanies colour (a11y). */
+  .chip {
+    @apply font-code text-label-sm uppercase tracking-wider px-space-xs py-0.5 rounded-sm border;
+  }
+  .chip-trace,
+  .chip-debug {
+    @apply bg-surface-container-high text-on-surface-variant border-outline-variant/40;
+  }
+  .chip-info {
+    @apply bg-surface-container-high text-tertiary-fixed-dim border-tertiary-fixed-dim/30;
+  }
+  .chip-warn {
+    @apply bg-secondary-container/20 text-secondary border-secondary/40;
+  }
+  .chip-error {
+    @apply bg-error-container/30 text-error border-error/40;
+  }
+  .chip-fatal {
+    @apply bg-error-container text-on-error-container border-error/60;
+  }
+  .chip-ok {
+    @apply bg-primary-container/15 text-primary-fixed-dim border-primary-fixed-dim/40;
+  }
+  .chip-neutral {
+    @apply bg-surface-container-highest text-on-surface-variant border-outline-variant/40;
+  }
+
+  /* Layer 1: panels. Thin border, no diffuse shadow. */
+  .panel {
+    @apply bg-surface-container-low border border-outline-variant/30 rounded;
+  }
+  .panel-row {
+    @apply border-b border-outline-variant/20 last:border-b-0;
+  }
+  .kbd {
+    @apply font-code text-code-sm bg-surface-container-lowest border border-outline-variant/40 rounded-sm px-1 py-0.5;
+  }
+}
