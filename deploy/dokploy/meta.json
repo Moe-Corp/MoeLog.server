@@ -1,0 +1,13 @@
+{
+  "id": "moelog",
+  "name": "MoeLog",
+  "version": "0.1.0",
+  "description": "Self-hosted logs, errors and process health. A sidecar outside your application reports what an in-process SDK cannot: a blocked event loop, a SIGKILL, an app that never started.",
+  "logo": "moelog.svg",
+  "links": {
+    "github": "https://github.com/Moe-Corp/MoeLog.server",
+    "website": "https://github.com/Moe-Corp/MoeLog.js",
+    "docs": "https://github.com/Moe-Corp/MoeLog.server#readme"
+  },
+  "tags": ["monitoring", "observability", "logging", "errors", "self-hosted"]
+}

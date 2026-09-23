@@ -1,0 +1,29 @@
+[variables]
+main_domain = "${domain}"
+api_domain = "${domain}"
+db_password = "${password:32}"
+admin_password = "${password:24}"
+jwt_secret = "${password:64}"
+ingest_key = "${hash:32}"
+
+[config]
+env = [
+  "POSTGRES_PASSWORD=${db_password}",
+  "DATABASE_URL=postgres://moelog:${db_password}@moelog-db:5432/moelog",
+  "MOELOG_ADMIN_PASSWORD=${admin_password}",
+  "MOELOG_JWT_SECRET=${jwt_secret}",
+  "MOELOG_INGEST_KEY=mlk_pub_${ingest_key}",
+  "MOELOG_WEB_ORIGIN=https://${main_domain}",
+  "MOELOG_API_PUBLIC_URL=https://${api_domain}",
+]
+mounts = []
+
+[[config.domains]]
+serviceName = "moelog-web"
+port = 3000
+host = "${main_domain}"
+
+[[config.domains]]
+serviceName = "moelog-api"
+port = 3000
+host = "${api_domain}"

@@ -1,0 +1,81 @@
+version: "3.8"
+
+# MoeLog — ingest API and dashboard.
+#
+# Two independent services with a domain each, and a Postgres behind them. There
+# is no reverse proxy here on purpose: the platform's edge proxy routes each
+# domain, and the only thing the browser asks the API directly is the live
+# WebSocket, which goes to the API's own domain.
+#
+# The API checks and migrates its database before opening its port, so a fresh
+# volume and an old one are the same deploy.
+
+services:
+  moelog-api:
+    image: ghcr.io/moe-corp/moelog-server-api:0.1.0
+    restart: always
+    expose:
+      - 3000
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      MOELOG_ADMIN_PASSWORD: ${MOELOG_ADMIN_PASSWORD}
+      MOELOG_JWT_SECRET: ${MOELOG_JWT_SECRET}
+      MOELOG_INGEST_KEY: ${MOELOG_INGEST_KEY}
+    depends_on:
+      moelog-db:
+        condition: service_healthy
+    # PID 1 is the server itself, a compiled binary in a distroless image, and
+    # it does not reap orphans. Docker's init does.
+    init: true
+    healthcheck:
+      # Exec form, no shell: the image has neither curl nor sh, so the binary
+      # that serves the port is what probes it.
+      test: ["CMD", "./server", "--health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  moelog-web:
+    image: ghcr.io/moe-corp/moelog-server-web:0.1.0
+    restart: always
+    expose:
+      - 3000
+    environment:
+      # adapter-node validates the Origin of every form POST against this. Get
+      # it wrong and the login answers 403 while every other page works.
+      ORIGIN: ${MOELOG_WEB_ORIGIN}
+      # How THIS server reaches the API: the internal network, never the wire.
+      MOELOG_API_URL: http://moelog-api:3000
+      # How the BROWSER reaches it: the API's own domain. It is what the live
+      # WebSocket connects to and what the first-run screen tells you to paste
+      # into your application's init({ server }).
+      MOELOG_API_PUBLIC_URL: ${MOELOG_API_PUBLIC_URL}
+    depends_on:
+      moelog-api:
+        condition: service_healthy
+    init: true
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  moelog-db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: moelog
+      POSTGRES_DB: moelog
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - moelog-db-data:/var/lib/postgresql/data
+    healthcheck:
+      # The API migrates as its first act, so it must not start against a
+      # Postgres that is still initialising.
+      test: ["CMD-SHELL", "pg_isready -U moelog -d moelog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  moelog-db-data:
