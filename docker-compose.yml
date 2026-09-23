@@ -1,0 +1,88 @@
+# MoeLog server — ingest API and its database.
+#
+#   docker compose up -d
+#
+# The API checks and migrates its database before opening the port, so a fresh
+# volume and a year-old one are the same command. On first boot it creates the
+# administrator (admin / moelog) and an ingest key; set MOELOG_ADMIN_PASSWORD
+# before that first boot and it will use yours instead.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - '${MOELOG_PORT:-3000}:3000'
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-moelog}:${POSTGRES_PASSWORD:-moelog}@db:5432/${POSTGRES_DB:-moelog}
+      # Uncomment before exposing this to anyone. Without it the administrator
+      # keeps the default password, which is published in the README.
+      # MOELOG_ADMIN_PASSWORD: ${MOELOG_ADMIN_PASSWORD}
+      # Persisted in the database when absent, so sessions survive a restart
+      # either way. Set it to share one secret across several API replicas.
+      # MOELOG_JWT_SECRET: ${MOELOG_JWT_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    # PID 1 in a distroless image is the server itself, which does not reap
+    # orphans. Docker's init does.
+    init: true
+    restart: always
+    healthcheck:
+      # Exec form, no shell: the image has neither curl nor sh, so the binary
+      # that serves the port is what probes it.
+      test: ['CMD', './server', '--health']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - '${MOELOG_WEB_PORT:-5174}:3000'
+    environment:
+      PORT: 3000
+      # adapter-node validates the Origin of every form POST against this. Get it
+      # wrong and the login answers 403 while every other page works, which is a
+      # miserable thing to debug.
+      ORIGIN: ${MOELOG_WEB_ORIGIN:-http://localhost:5174}
+      # How THIS server reaches the API: the internal network, never the wire.
+      MOELOG_API_URL: http://api:3000
+      # How the BROWSER reaches it: the API's own public origin. It is what the
+      # live WebSocket connects to and what the first-run screen tells you to
+      # paste into init({ server }). Behind a platform that gives each service a
+      # domain, this is the API's domain.
+      MOELOG_API_PUBLIC_URL: ${MOELOG_API_PUBLIC_URL:-http://localhost:3000}
+    depends_on:
+      api:
+        condition: service_healthy
+    init: true
+    restart: always
+    healthcheck:
+      test: ['CMD', 'bun', '-e', "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-moelog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-moelog}
+      POSTGRES_DB: ${POSTGRES_DB:-moelog}
+    volumes:
+      - moelog-db-data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      # The API migrates as its first act, so it must not start against a
+      # Postgres that is still initialising.
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  moelog-db-data:

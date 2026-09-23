@@ -1,0 +1,9 @@
+node_modules
+*/node_modules
+web/.svelte-kit
+web/build
+api/*.db
+api/*.db-wal
+api/*.db-shm
+server/design
+.git
