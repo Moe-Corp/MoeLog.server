@@ -1,0 +1,23 @@
+{
+  "name": "moelog-server",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "dev:api": "bun run --filter '@moelog-server/api' dev",
+    "dev:web": "bun run --filter '@moelog-server/web' dev",
+    "build": "bun run --filter '@moelog-server/web' build",
+    "start": "bun run --filter '@moelog-server/api' start",
+    "reset": "rm -f api/moelog.db api/moelog.db-wal api/moelog.db-shm",
+    "tunel": "cloudflared tunnel --url http://localhost:5174",
+    "typecheck": "bun run --filter '@moelog-server/api' typecheck",
+    "db:generate": "bun run --filter '@moelog-server/api' db:generate",
+    "up": "docker compose up -d --build",
+    "down": "docker compose down",
+    "logs": "docker compose logs -f api"
+  }
+}
